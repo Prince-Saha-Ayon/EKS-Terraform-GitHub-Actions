@@ -40,42 +40,41 @@ resource "aws_eks_addon" "eks-addons" {
   addon_version = each.value.version
 
   depends_on = [
-    #aws_eks_node_group.ondemand-node,
+    aws_eks_node_group.ondemand-node,
     aws_eks_node_group.spot-node
   ]
 }
 
 # NodeGroups
-#resource "aws_eks_node_group" "ondemand-node" {
-#  cluster_name    = aws_eks_cluster.eks[0].name
-#  node_group_name = "${var.cluster-name}-on-demand-nodes"
+resource "aws_eks_node_group" "ondemand-node" {
+  cluster_name    = aws_eks_cluster.eks[0].name
+  node_group_name = "${var.cluster-name}-on-demand-nodes"
 
-#  node_role_arn = aws_iam_role.eks-nodegroup-role[0].arn
+  node_role_arn = aws_iam_role.eks-nodegroup-role[0].arn
 
-#  scaling_config {
-#    desired_size = var.desired_capacity_on_demand
-#    min_size     = var.min_capacity_on_demand
-#    max_size     = var.max_capacity_on_demand
-#  }
+  scaling_config {
+    desired_size = var.desired_capacity_on_demand
+    min_size     = var.min_capacity_on_demand
+    max_size     = var.max_capacity_on_demand
+  }
 
+  subnet_ids = [aws_subnet.private-subnet[0].id, aws_subnet.private-subnet[1].id, aws_subnet.private-subnet[2].id]
 
-#  subnet_ids = [aws_subnet.private-subnet[0].id, aws_subnet.private-subnet[1].id, aws_subnet.private-subnet[2].id]
+  instance_types = var.ondemand_instance_types
+  capacity_type  = "ON_DEMAND"
+  labels = {
+    type = "ondemand"
+  }
 
- # instance_types = var.ondemand_instance_types
- # capacity_type  = "ON_DEMAND"
-#  labels = {
-#    type = "ondemand"
-#  }
+  update_config {
+    max_unavailable = 1
+  }
+  tags = {
+    "Name" = "${var.cluster-name}-ondemand-nodes"
+  }
 
-#  update_config {
-#    max_unavailable = 1
-#  }
-#  tags = {
-#    "Name" = "${var.cluster-name}-ondemand-nodes"
-#  }
-
-#  depends_on = [aws_eks_cluster.eks]
-#}
+  depends_on = [aws_eks_cluster.eks]
+}
 
 resource "aws_eks_node_group" "spot-node" {
   cluster_name    = aws_eks_cluster.eks[0].name
